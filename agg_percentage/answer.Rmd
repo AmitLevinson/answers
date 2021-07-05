@@ -1,0 +1,50 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+<br>
+<br>
+
+> Q: How do you create a graph of two groups showing their percentage? What aggregation function do you need?
+
+```{r}
+library(ggplot2)
+library(dplyr)
+theme_set(theme_minimal())
+```
+
+```{r}
+dat <- data.frame(Bought = sample(c("Discount", "No discount"), size = 100, replace = TRUE, prob = c(0.7,0.3)))
+```
+
+```{r}
+table(dat)
+```
+
+### First option, aggregate before ggplot:
+
+```{r}
+dat_agg <- dat %>% 
+  group_by(Bought) %>% 
+  summarise(total = n()) %>% 
+  mutate(prop = total/sum(total))
+```
+
+```{r}
+ggplot(data = dat_agg, aes(x = Bought, y = prop))+
+  geom_col(position = "dodge", show.legend = FALSE)
+```
+
+
+### Second option, use stat_function for aggregation
+
+```{r}
+ggplot(data = dat, aes(x = Bought,y = ..prop.., group = 1))+
+  geom_bar(show.legend = FALSE)
+```
+
