@@ -43,6 +43,8 @@ ggplot(data = dat_agg, aes(x = Bought, y = prop))+
 
 ### Second option, use stat_function for aggregation
 
+**(No aggregation is needed prior to passing the data to ggplot)**
+
 ```{r}
 ggplot(data = dat, aes(x = Bought,y = ..prop.., group = 1))+
   geom_bar(show.legend = FALSE)
