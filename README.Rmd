@@ -1,0 +1,48 @@
+---
+title: "Answers"
+author: "Amit Levinson"
+date: "`r Sys.Date()`"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+
+# answers
+A repository containing answers for questions in forums
+
+<details>
+<summary>
+### How can you randomly sample 100 values with replacement from a vector and calculate an IQR, 10000 times?
+</summary>
+
+```{r}
+# Fake data
+vec <- 1:100
+
+# Option 1: Functional
+calc_iqr <- function() {
+    inner_vec <- sample(vec, size = 100, replace = T)
+    IQR(inner_vec)
+}
+
+values_a <- replicate(100, expr = calc_iqr())
+
+# Output ------------------------------------------------------------------
+values_a
+
+# Option 2: For loop
+values_b <- vector(mode = "numeric", length = 100)
+
+output <- for (i in 1:100) {
+  inner_vec <- sample(vec, size = 100, replace = T)
+  values_b[[i]] <- IQR(inner_vec)
+}
+
+# Output ------------------------------------------------------------------
+values_b
+```
+
+</details>
+
