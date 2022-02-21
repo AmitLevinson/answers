@@ -6,18 +6,111 @@ output: github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, messages = FALSE)
 ```
 
 # answers
-A repository containing answers for questions in forums
+A repository containing answers for questions in forums.  
+
+You might find discrepancies between the number of times requested in the question and my response. This is mainly for ease of printing.
+
 
 <details>
-<summary>
-### How can you randomly sample 100 values with replacement from a vector and calculate an IQR, 10000 times?
-</summary>
+  <summary> 
+  How can we generate ~50 formulas to pass onto a model from a given set of variables? ** 
+  </summary>
+```{r multiple-formulas}
+library(dplyr)
+library(purrr)
+library(broom)
 
+mtcars_vars <- names(mtcars)
+
+# Generate possible formulas
+mtcars_formulas <- expand.grid(mtcars_vars,mtcars_vars,mtcars_vars) %>% 
+  filter(Var1 != Var2, Var2 != Var3, Var1 != Var3) %>% 
+  sample_n(10)
+
+# Function to create formulas
+f <- function (Var1, Var2, Var3) paste(Var1, paste(Var2, Var3, sep = " + "), sep = " ~ ")
+
+formulas <- mtcars_formulas %>%
+  pmap_chr(f)
+
+head(formulas)
+
+# Iterate across the formulas and tidy the output with formula as name
+models <- map(formulas, ~ lm(., data = mtcars)) %>% 
+  set_names(formulas) %>% 
+  map_dfr(tidy, .id = ".x")
+
+# Output
+models
+```
+  
+</details>
+
+
+
+<details>
+  <summary> 
+  The categories on the X-axis are too condensed and overflow, can we expand them to more than one row? 
+  </summary>
+```{r ggplot-long-categories}
+library(ggplot2)
+
+# Fake data
+dat <- data.frame(
+category = sample(c(stringr::sentences[1:3], stringr::words[1:4]), size = 100, replace = T)
+)
+
+# Option 1 - Category to y axis instead of splitting
+p1 <- ggplot(dat) +
+geom_bar(aes(y = category)) +
+labs(title = "Put the category on the Y-axis")
+
+# Option 2: Stringr::str_wrap
+p2 <- ggplot(dat) +
+geom_bar(aes(x = stringr::str_wrap(category, 15))) +
+labs(title = "use stringr:str_wrap(variable, 15)")
+```
+
+</details>
+
+
+<details>
+  <summary> 
+  I have X classes (groups) and would like to run a t-test for groups within each class separately
+  </summary>
 ```{r}
+library(ggplot2)
+library(dplyr)
+library(broom)
+
+mtcars %>%
+group_by(gear) %>%
+summarize(t.test(mpg , cyl, data = cur_data()) %>% tidy())
+
+# Using Purrr & unnest
+library(purrr)
+library(tidyr)
+
+mtcars %>%
+group_nest(gear) %>%
+summarise(ttest = map(data, ~ (t.test(x = .$mpg , y = .$cyl, data = .x)))) %>%
+mutate(ttest = map(ttest, tidy)) %>%
+unnest(ttest)
+```
+
+</details>
+
+
+<details>
+  <summary> 
+  How can you randomly sample 100 values with replacement from a vector and calculate an IQR, 10000 times?
+  </summary>
+
+```{r samples-and-iqr}
 # Fake data
 vec <- 1:100
 
@@ -43,6 +136,8 @@ output <- for (i in 1:100) {
 # Output ------------------------------------------------------------------
 values_b
 ```
-
 </details>
+
+
+
 
