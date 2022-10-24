@@ -14,6 +14,33 @@ A repository containing answers for questions in forums.
 
 You might find discrepancies between the number of times requested in the question and my response. This is mainly for ease of printing.
 
+<details>
+  <summary> 
+   How can I iterate over every column in my dataframe and calculate a t.test between half of the elemnts (e.g. 1:50 vs 51:100) (10/24/2022)
+  </summary>
+
+```{r ttest-part-of-column}
+library(purrr)
+library(broom)
+
+dat <- data.frame(
+  col1 = sample(c(1:100), size = 100, replace = T),
+  col2 = sample(c(1:100), size = 100, replace = T),
+  col3 = sample(c(1:100), size = 100, replace = T)
+)
+
+calculate_ttest <- function(column) {
+  t.test(column[50:100], column[1:49], alternative= "less", paired=FALSE, mu=0, conf.level = 0.9, var.equal = TRUE) |>
+    broom::tidy() 
+}
+
+dat %>% 
+  map_dfr(calculate_ttest, .id = 'columnname')
+```
+</details>
+
+
+
 
 <details>
   <summary> 

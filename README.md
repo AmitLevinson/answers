@@ -1,7 +1,7 @@
 Answers
 ================
 Amit Levinson
-2022-02-21
+2022-10-24
 
 # answers
 
@@ -10,6 +10,40 @@ A repository containing answers for questions in forums.
 You might find discrepancies between the number of times requested in
 the question and my response. This is mainly for ease of printing.
 
+<details>
+<summary>
+How can I iterate over every column in my dataframe and calculate a
+t.test between half of the elemnts (e.g. 1:50 vs 51:100) (10/24/2022)
+</summary>
+
+``` r
+library(purrr)
+library(broom)
+
+dat <- data.frame(
+  col1 = sample(c(1:100), size = 100, replace = T),
+  col2 = sample(c(1:100), size = 100, replace = T),
+  col3 = sample(c(1:100), size = 100, replace = T)
+)
+
+calculate_ttest <- function(column) {
+  t.test(column[50:100], column[1:49], alternative= "less", paired=FALSE, mu=0, conf.level = 0.9, var.equal = TRUE) |>
+    broom::tidy() 
+}
+
+dat %>% 
+  map_dfr(calculate_ttest, .id = 'columnname')
+```
+
+    ## # A tibble: 3 × 11
+    ##   columnname estimate estimate1 estimate2 statistic p.value parameter conf.low
+    ##   <chr>         <dbl>     <dbl>     <dbl>     <dbl>   <dbl>     <dbl>    <dbl>
+    ## 1 col1           4.70      54.8      50.1     0.752  0.773         98     -Inf
+    ## 2 col2          -9.74      41.7      51.4    -1.58   0.0591        98     -Inf
+    ## 3 col3          -7.94      45.6      53.5    -1.38   0.0852        98     -Inf
+    ## # … with 3 more variables: conf.high <dbl>, method <chr>, alternative <chr>
+
+</details>
 <details>
 <summary>
 How can we generate \~50 formulas to pass onto a model from a given set
@@ -51,8 +85,8 @@ formulas <- mtcars_formulas %>%
 head(formulas)
 ```
 
-    ## [1] "cyl ~ disp + gear"  "disp ~ am + gear"   "carb ~ am + qsec"  
-    ## [4] "qsec ~ gear + carb" "wt ~ qsec + cyl"    "drat ~ vs + disp"
+    ## [1] "drat ~ hp + cyl"   "qsec ~ am + mpg"   "wt ~ carb + vs"   
+    ## [4] "am ~ disp + carb"  "drat ~ gear + mpg" "vs ~ hp + cyl"
 
 ``` r
 # Iterate across the formulas and tidy the output with formula as name
@@ -64,20 +98,20 @@ models <- map(formulas, ~ lm(., data = mtcars)) %>%
 models
 ```
 
-    ## # A tibble: 30 x 6
-    ##    .x                 term         estimate std.error statistic  p.value
-    ##    <chr>              <chr>           <dbl>     <dbl>     <dbl>    <dbl>
-    ##  1 cyl ~ disp + gear  (Intercept)    3.06     1.08        2.83  8.42e- 3
-    ##  2 cyl ~ disp + gear  disp           0.0131   0.00139     9.43  2.46e-10
-    ##  3 cyl ~ disp + gear  gear           0.0296   0.233       0.127 9.00e- 1
-    ##  4 disp ~ am + gear   (Intercept)  416.     133.          3.13  3.95e- 3
-    ##  5 disp ~ am + gear   am          -101.      60.2        -1.67  1.05e- 1
-    ##  6 disp ~ am + gear   gear         -39.1     40.7        -0.961 3.45e- 1
-    ##  7 carb ~ am + qsec   (Intercept)   13.9      2.36        5.88  2.24e- 6
-    ##  8 carb ~ am + qsec   am            -0.319    0.462      -0.690 4.96e- 1
-    ##  9 carb ~ am + qsec   qsec          -0.614    0.129      -4.75  5.02e- 5
-    ## 10 qsec ~ gear + carb (Intercept)   20.2      1.28       15.8   8.86e-16
-    ## # ... with 20 more rows
+    ## # A tibble: 30 × 6
+    ##    .x               term        estimate std.error statistic  p.value
+    ##    <chr>            <chr>          <dbl>     <dbl>     <dbl>    <dbl>
+    ##  1 drat ~ hp + cyl  (Intercept)  5.07      0.257      19.8   2.30e-18
+    ##  2 drat ~ hp + cyl  hp           0.00340   0.00176     1.94  6.26e- 2
+    ##  3 drat ~ hp + cyl  cyl         -0.318     0.0674     -4.72  5.53e- 5
+    ##  4 qsec ~ am + mpg  (Intercept) 13.8       0.853      16.1   5.10e-16
+    ##  5 qsec ~ am + mpg  am          -2.69      0.566      -4.76  5.00e- 5
+    ##  6 qsec ~ am + mpg  mpg          0.258     0.0468      5.50  6.27e- 6
+    ##  7 wt ~ carb + vs   (Intercept)  3.33      0.450       7.39  3.86e- 8
+    ##  8 wt ~ carb + vs   carb         0.100     0.112       0.890 3.81e- 1
+    ##  9 wt ~ carb + vs   vs          -0.895     0.360      -2.49  1.90e- 2
+    ## 10 am ~ disp + carb (Intercept)  0.782     0.163       4.80  4.47e- 5
+    ## # … with 20 more rows
 
 </details>
 <details>
@@ -122,13 +156,13 @@ group_by(gear) %>%
 summarize(t.test(mpg , cyl, data = cur_data()) %>% tidy())
 ```
 
-    ## # A tibble: 3 x 11
+    ## # A tibble: 3 × 11
     ##    gear estimate estimate1 estimate2 statistic      p.value parameter conf.low
     ##   <dbl>    <dbl>     <dbl>     <dbl>     <dbl>        <dbl>     <dbl>    <dbl>
     ## 1     3     8.64      16.1      7.47      9.36 0.0000000326     17.4      6.70
     ## 2     4    19.9       24.5      4.67     12.8  0.0000000286     11.8     16.5 
     ## 3     5    15.4       21.4      6         4.95 0.00504           4.72     7.24
-    ## # ... with 3 more variables: conf.high <dbl>, method <chr>, alternative <chr>
+    ## # … with 3 more variables: conf.high <dbl>, method <chr>, alternative <chr>
 
 ``` r
 # Using Purrr & unnest
@@ -142,13 +176,13 @@ mutate(ttest = map(ttest, tidy)) %>%
 unnest(ttest)
 ```
 
-    ## # A tibble: 3 x 10
-    ##   estimate estimate1 estimate2 statistic      p.value parameter conf.low conf.high
-    ##      <dbl>     <dbl>     <dbl>     <dbl>        <dbl>     <dbl>    <dbl>     <dbl>
-    ## 1     8.64      16.1      7.47      9.36 0.0000000326     17.4      6.70      10.6
-    ## 2    19.9       24.5      4.67     12.8  0.0000000286     11.8     16.5       23.3
-    ## 3    15.4       21.4      6         4.95 0.00504           4.72     7.24      23.5
-    ## # ... with 2 more variables: method <chr>, alternative <chr>
+    ## # A tibble: 3 × 10
+    ##   estimate estimate1 estimate2 statistic    p.value parameter conf.low conf.high
+    ##      <dbl>     <dbl>     <dbl>     <dbl>      <dbl>     <dbl>    <dbl>     <dbl>
+    ## 1     8.64      16.1      7.47      9.36    3.26e-8     17.4      6.70      10.6
+    ## 2    19.9       24.5      4.67     12.8     2.86e-8     11.8     16.5       23.3
+    ## 3    15.4       21.4      6         4.95    5.04e-3      4.72     7.24      23.5
+    ## # … with 2 more variables: method <chr>, alternative <chr>
 
 </details>
 <details>
@@ -173,15 +207,15 @@ values_a <- replicate(100, expr = calc_iqr())
 values_a
 ```
 
-    ##   [1] 48.00 51.75 49.00 42.50 48.50 51.00 55.25 56.25 50.50 47.75 50.00 47.75
-    ##  [13] 54.00 54.25 41.25 54.75 50.50 45.50 49.25 50.25 43.25 46.50 47.00 52.25
-    ##  [25] 60.00 46.75 49.50 60.25 51.25 60.00 50.50 55.25 41.50 56.00 45.75 37.00
-    ##  [37] 52.75 55.00 40.50 53.25 47.50 49.00 52.25 49.75 55.25 38.25 43.25 55.00
-    ##  [49] 45.00 44.25 56.50 52.25 40.75 54.25 42.75 48.25 51.50 47.50 44.25 47.50
-    ##  [61] 48.00 57.75 55.25 47.75 47.50 54.75 44.25 51.25 43.50 50.00 49.25 45.75
-    ##  [73] 50.00 48.25 42.00 43.25 43.50 51.75 47.25 52.75 53.50 50.00 51.25 47.75
-    ##  [85] 51.25 48.25 57.00 51.25 56.25 44.00 46.00 52.75 51.00 54.75 49.50 49.00
-    ##  [97] 53.25 53.50 52.50 48.25
+    ##   [1] 50.25 46.00 50.25 43.25 47.50 57.00 48.00 52.25 49.00 48.25 52.00 39.25
+    ##  [13] 42.50 62.25 51.50 51.75 56.50 41.75 53.25 50.00 43.00 61.25 51.50 45.00
+    ##  [25] 44.25 53.25 53.25 43.00 51.00 50.50 52.25 46.75 47.25 46.50 47.00 50.75
+    ##  [37] 52.50 60.00 44.25 49.50 54.25 45.75 51.00 47.50 46.75 52.25 55.75 49.00
+    ##  [49] 54.50 49.00 49.75 46.00 48.25 52.50 51.25 51.50 40.50 48.50 42.25 53.50
+    ##  [61] 45.50 48.25 47.75 63.75 52.00 37.75 50.25 52.50 44.25 49.75 44.50 48.00
+    ##  [73] 46.50 45.50 43.25 40.25 62.00 49.25 46.00 48.25 51.50 46.50 51.25 57.50
+    ##  [85] 54.50 50.00 47.25 44.75 44.00 46.25 40.25 46.75 50.00 47.00 42.00 38.25
+    ##  [97] 44.00 50.25 40.25 51.50
 
 ``` r
 # Option 2: For loop
@@ -196,14 +230,14 @@ output <- for (i in 1:100) {
 values_b
 ```
 
-    ##   [1] 43.25 45.25 40.50 53.50 51.75 49.00 38.75 48.00 54.50 46.25 48.25 57.25
-    ##  [13] 57.50 53.25 51.25 54.75 47.00 54.50 52.25 58.50 57.50 46.75 52.00 55.25
-    ##  [25] 55.00 47.75 54.25 55.25 52.50 51.50 43.00 44.75 40.75 55.50 42.00 52.50
-    ##  [37] 47.50 50.75 44.25 50.25 45.50 44.50 50.00 48.50 52.25 51.00 49.25 50.25
-    ##  [49] 47.75 49.50 38.75 42.50 48.75 48.00 52.50 49.00 50.50 49.00 53.75 51.00
-    ##  [61] 50.25 47.50 54.00 47.25 53.25 52.25 46.00 45.50 50.50 50.50 44.50 48.75
-    ##  [73] 53.25 64.75 43.50 56.25 46.75 48.50 43.00 47.50 55.50 49.00 60.25 49.75
-    ##  [85] 43.00 44.25 49.50 47.25 49.75 56.50 51.75 50.50 58.50 57.25 41.25 52.75
-    ##  [97] 52.50 43.25 44.25 49.25
+    ##   [1] 44.25 53.25 48.25 45.00 51.50 48.25 54.00 49.50 57.50 44.50 54.50 54.75
+    ##  [13] 47.25 45.25 47.25 49.50 46.75 40.25 44.25 52.25 53.25 48.50 41.25 46.00
+    ##  [25] 60.00 53.25 48.50 47.50 51.50 50.75 46.25 45.00 58.25 51.25 44.25 46.50
+    ##  [37] 40.00 51.00 40.50 46.50 53.00 44.75 49.25 41.00 50.50 49.75 46.50 52.25
+    ##  [49] 54.50 49.50 56.00 47.25 41.50 51.00 55.00 49.25 56.25 42.25 50.00 44.50
+    ##  [61] 61.25 44.25 48.25 56.25 55.00 50.75 48.50 57.50 50.50 48.25 58.75 50.25
+    ##  [73] 50.25 53.50 47.00 45.75 48.25 45.50 44.00 52.25 48.00 44.00 44.50 52.25
+    ##  [85] 53.50 51.50 35.25 45.50 47.00 40.25 47.25 54.50 48.25 46.25 58.25 53.25
+    ##  [97] 54.00 48.50 57.50 49.00
 
 </details>
